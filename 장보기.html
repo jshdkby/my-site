@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>우리 집 장보기</title>
+<style>
+  :root {
+    --bg: #eef7e4;
+    --bg-dots: #e2f0d3;
+    --card: #ffffff;
+    --ink: #20331b;
+    --muted: #6b7f63;
+    --line: #dcebcf;
+    --green: #2f7d32;
+    --green-dark: #1f5c23;
+    --green-soft: #d8efc8;
+    --danger: #c0473b;
+    --shadow: 0 2px 0 #d3e6c2, 0 6px 18px rgba(47, 125, 50, .08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+    color: var(--ink);
+    background-color: var(--bg);
+    background-image: radial-gradient(var(--bg-dots) 1.5px, transparent 1.5px);
+    background-size: 18px 18px;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 18px;
+  }
+  .title { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 52px; height: 52px; border-radius: 16px; background: var(--green);
+    display: grid; place-items: center; font-size: 28px; box-shadow: 0 3px 0 var(--green-dark);
+  }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -0.5px; }
+  .date { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  .total {
+    background: var(--card); border-radius: 999px; padding: 8px 14px;
+    font-weight: 700; color: var(--green-dark); box-shadow: var(--shadow); white-space: nowrap;
+  }
+
+  /* 항목 추가 */
+  .add {
+    background: var(--card); border-radius: 20px; padding: 16px; box-shadow: var(--shadow);
+    display: grid; grid-template-columns: 2fr 1.2fr 0.8fr 1.4fr auto; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .add label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 4px 4px; }
+  input, select {
+    width: 100%; font: inherit; font-size: 16px; color: var(--ink);
+    border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fbfef8;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--green); background: #fff; }
+  .btn {
+    font: inherit; font-weight: 700; font-size: 16px; border: none; cursor: pointer;
+    border-radius: 12px; padding: 10px 18px; background: var(--green); color: #fff;
+    box-shadow: 0 3px 0 var(--green-dark); transition: transform .05s;
+  }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--green-dark); }
+  .add .btn { align-self: end; height: 46px; }
+  .btn.ghost { background: var(--card); color: var(--green-dark); box-shadow: 0 3px 0 #c4ddb0; border: 2px solid var(--green-soft); }
+  .btn.small { font-size: 14px; padding: 6px 12px; }
+
+  /* 종류별 카드 */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .cat { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+  .cat-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; background: var(--green-soft);
+  }
+  .cat-head h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  .cat-head .emoji { font-size: 22px; }
+  .count { font-size: 13px; font-weight: 700; color: var(--green-dark); background: #fff; padding: 3px 10px; border-radius: 999px; }
+  .count.full { background: var(--green); color: #fff; }
+  ul { list-style: none; margin: 0; padding: 6px 8px 10px; }
+  .empty { color: var(--muted); font-size: 14px; padding: 12px 10px; }
+
+  li.item {
+    display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px;
+  }
+  li.item:hover { background: #f5fbef; }
+  li.item + li.item { border-top: 1px dashed var(--line); }
+
+  .check {
+    appearance: none; -webkit-appearance: none; flex: none;
+    width: 26px; height: 26px; padding: 0; border: 2.5px solid #a9cf92; border-radius: 8px;
+    background: #fff; cursor: pointer; display: grid; place-items: center;
+  }
+  .check:checked { background: var(--green); border-color: var(--green); }
+  .check:checked::after { content: "✓"; color: #fff; font-weight: 900; font-size: 16px; line-height: 1; }
+  .check:focus-visible { outline: 3px solid #9ccc7c; outline-offset: 2px; }
+
+  .body { flex: 1; min-width: 0; cursor: pointer; }
+  .name { font-size: 17px; font-weight: 600; word-break: break-all; }
+  .qty { color: var(--green); font-weight: 700; margin-left: 4px; }
+  .memo { display: block; font-size: 13px; color: var(--muted); word-break: break-all; }
+  li.done .name, li.done .qty, li.done .memo { text-decoration: line-through; color: #a3b39b; }
+  li.done .name { font-weight: 500; }
+
+  .del {
+    flex: none; width: 30px; height: 30px; border: none; border-radius: 10px; cursor: pointer;
+    background: transparent; color: #b3c3aa; font-size: 20px; line-height: 1;
+  }
+  .del:hover { background: #fdecea; color: var(--danger); }
+
+  /* 고치기 */
+  li.editing { flex-wrap: wrap; background: #f5fbef; }
+  .edit-fields { flex: 1; display: grid; grid-template-columns: 2fr 1fr; gap: 6px; }
+  .edit-fields .memo-in { grid-column: 1 / -1; }
+  .edit-fields input { font-size: 15px; padding: 8px 10px; }
+  .edit-actions { display: flex; gap: 6px; width: 100%; justify-content: flex-end; }
+
+  footer { margin-top: 24px; display: flex; justify-content: center; }
+  .note { text-align: center; color: var(--muted); font-size: 13px; margin-top: 10px; }
+
+  @media (max-width: 720px) {
+    .add { grid-template-columns: 1fr 1fr; }
+    .add .f-name { grid-column: 1 / -1; }
+    .add .f-memo { grid-column: 1 / -1; }
+    .add .btn { grid-column: 1 / -1; }
+    h1 { font-size: 22px; }
+    .logo { width: 44px; height: 44px; font-size: 24px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <div class="logo" aria-hidden="true">🧺</div>
+      <div>
+        <h1>우리 집 장보기</h1>
+        <p class="date" id="today"></p>
+      </div>
+    </div>
+    <div class="total" id="total"></div>
+  </header>
+
+  <form class="add" id="addForm" autocomplete="off">
+    <div class="f-name">
+      <label for="inName">무엇을 살까요?</label>
+      <input id="inName" placeholder="예: 시금치" required>
+    </div>
+    <div class="f-cat">
+      <label for="inCat">종류</label>
+      <select id="inCat"></select>
+    </div>
+    <div class="f-qty">
+      <label for="inQty">수량</label>
+      <input id="inQty" placeholder="예: 2">
+    </div>
+    <div class="f-memo">
+      <label for="inMemo">메모</label>
+      <input id="inMemo" placeholder="예: 저지방">
+    </div>
+    <button class="btn" type="submit">+ 추가</button>
+  </form>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>
+    <button class="btn ghost" id="resetBtn" type="button">🔄 새 장보기 (체크 모두 풀기)</button>
+  </footer>
+  <p class="note">이 목록은 이 컴퓨터의 이 브라우저 안에만 저장돼요.</p>
+</div>
+
+<script>
+const STORAGE_KEY = "jangbogi-v1";
+
+const CATEGORIES = [
+  { id: "veg",   emoji: "🥬", name: "채소·과일" },
+  { id: "meat",  emoji: "🥩", name: "고기·생선" },
+  { id: "dairy", emoji: "🥛", name: "유제품·계란" },
+  { id: "grain", emoji: "🍚", name: "곡물·가공식품" },
+  { id: "sauce", emoji: "🧂", name: "양념·소스" },
+  { id: "home",  emoji: "🧻", name: "생활용품" },
+];
+
+const DEFAULT_ITEMS = [
+  ["veg", "대파"], ["veg", "양파"], ["veg", "감자"], ["veg", "사과"], ["veg", "바나나"],
+  ["meat", "돼지고기", "", "앞다리살"], ["meat", "닭고기"], ["meat", "고등어"],
+  ["dairy", "계란", "1판", "30구"], ["dairy", "우유"], ["dairy", "두부"], ["dairy", "치즈"],
+  ["grain", "쌀"], ["grain", "라면"], ["grain", "식빵"],
+  ["sauce", "간장"], ["sauce", "참기름"], ["sauce", "고추장"],
+  ["home", "휴지"], ["home", "세제"], ["home", "주방세제"],
+];
+
+let editingId = null;
+
+function newId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (Array.isArray(saved)) return saved;
+  } catch (e) {}
+  let t = Date.now();
+  return DEFAULT_ITEMS.map(([cat, name, qty = "", memo = ""]) => (
+    { id: newId(), cat, name, qty, memo, done: false, added: t++, doneAt: 0 }
+  ));
+}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch (e) {}
+}
+
+let items = load();
+
+function qtyText(qty) {
+  if (!qty) return "";
+  return /^\d+$/.test(qty) ? "×" + qty : qty;
+}
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) if (c != null) node.append(c);
+  return node;
+}
+
+function renderItem(item) {
+  if (item.id === editingId) return renderEditor(item);
+
+  const check = el("input", {
+    type: "checkbox", class: "check", "aria-label": item.name + " 샀어요",
+    onchange: () => toggle(item.id),
+  });
+  check.checked = item.done;
+
+  const body = el("div", { class: "body", title: "눌러서 고치기", onclick: () => startEdit(item.id) },
+    el("span", { class: "name" }, item.name),
+    item.qty ? el("span", { class: "qty" }, qtyText(item.qty)) : null,
+    item.memo ? el("span", { class: "memo" }, item.memo) : null,
+  );
+
+  const del = el("button", {
+    type: "button", class: "del", "aria-label": item.name + " 삭제", title: "삭제",
+    onclick: () => remove(item.id),
+  }, "×");
+
+  return el("li", { class: "item" + (item.done ? " done" : "") }, check, body, del);
+}
+
+function renderEditor(item) {
+  const name = el("input", { value: item.name, "aria-label": "이름" });
+  const qty = el("input", { value: item.qty, placeholder: "수량", "aria-label": "수량" });
+  const memo = el("input", { value: item.memo, placeholder: "메모", class: "memo-in", "aria-label": "메모" });
+
+  const commit = () => {
+    const n = name.value.trim();
+    if (!n) { name.focus(); return; }
+    Object.assign(item, { name: n, qty: qty.value.trim(), memo: memo.value.trim() });
+    editingId = null;
+    save(); render();
+  };
+  const cancel = () => { editingId = null; render(); };
+  for (const input of [name, qty, memo]) {
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") commit();
+      if (e.key === "Escape") cancel();
+    });
+  }
+  setTimeout(() => name.focus(), 0);
+
+  return el("li", { class: "item editing" },
+    el("div", { class: "edit-fields" }, name, qty, memo),
+    el("div", { class: "edit-actions" },
+      el("button", { type: "button", class: "btn ghost small", onclick: cancel }, "취소"),
+      el("button", { type: "button", class: "btn small", onclick: commit }, "저장"),
+    ),
+  );
+}
+
+function render() {
+  const grid = document.getElementById("grid");
+  grid.replaceChildren();
+
+  for (const cat of CATEGORIES) {
+    const list = items.filter(i => i.cat === cat.id).sort((a, b) =>
+      a.done !== b.done ? (a.done ? 1 : -1) :
+      a.done ? a.doneAt - b.doneAt : a.added - b.added
+    );
+    const doneCount = list.filter(i => i.done).length;
+    const full = list.length > 0 && doneCount === list.length;
+
+    const ul = el("ul");
+    if (list.length === 0) ul.append(el("li", { class: "empty" }, "아직 항목이 없어요"));
+    for (const item of list) ul.append(renderItem(item));
+
+    grid.append(el("section", { class: "cat" },
+      el("div", { class: "cat-head" },
+        el("h2", {}, el("span", { class: "emoji", "aria-hidden": "true" }, cat.emoji), cat.name),
+        el("span", { class: "count" + (full ? " full" : "") }, `${doneCount}/${list.length}`),
+      ),
+      ul,
+    ));
+  }
+
+  const done = items.filter(i => i.done).length;
+  document.getElementById("total").textContent =
+    items.length === 0 ? "목록이 비어 있어요" :
+    done === items.length ? "🎉 다 샀어요!" : `${items.length}개 중 ${done}개 샀어요`;
+}
+
+function toggle(id) {
+  const item = items.find(i => i.id === id);
+  item.done = !item.done;
+  item.doneAt = item.done ? Date.now() : 0;
+  save(); render();
+}
+
+function remove(id) {
+  items = items.filter(i => i.id !== id);
+  if (editingId === id) editingId = null;
+  save(); render();
+}
+
+function startEdit(id) {
+  editingId = id;
+  render();
+}
+
+// 시작
+const today = new Date();
+document.getElementById("today").textContent = today.toLocaleDateString("ko-KR", {
+  year: "numeric", month: "long", day: "numeric", weekday: "long",
+});
+
+const catSelect = document.getElementById("inCat");
+for (const c of CATEGORIES) catSelect.append(el("option", { value: c.id }, `${c.emoji} ${c.name}`));
+
+document.getElementById("addForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = document.getElementById("inName");
+  const qty = document.getElementById("inQty");
+  const memo = document.getElementById("inMemo");
+  const n = name.value.trim();
+  if (!n) return;
+  items.push({
+    id: newId(), cat: catSelect.value, name: n, qty: qty.value.trim(), memo: memo.value.trim(),
+    done: false, added: Date.now(), doneAt: 0,
+  });
+  save(); render();
+  name.value = qty.value = memo.value = "";
+  name.focus();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (!items.some(i => i.done)) { alert("체크한 항목이 없어요."); return; }
+  if (!confirm("체크한 것을 모두 풀까요? 항목은 그대로 남아요.")) return;
+  for (const i of items) { i.done = false; i.doneAt = 0; }
+  save(); render();
+});
+
+render();
+</script>
+</body>
+</html>
